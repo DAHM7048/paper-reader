@@ -37,14 +37,6 @@ def resolve_output_dir(input_pdf: Path) -> tuple[Path, str]:
 
 def resolve_preferred_pdf(input_pdf: Path) -> Path:
     input_pdf = input_pdf.resolve()
-    if input_pdf.stem.endswith("-mono"):
-        return input_pdf
-
-    mono_candidate = input_pdf.with_name(f"{input_pdf.stem}-mono.pdf")
-    if mono_candidate.exists():
-        print(f"Found mono PDF, using: {mono_candidate}")
-        return mono_candidate
-
     return input_pdf
 
 

@@ -19,6 +19,7 @@ DEFAULT_STANDARD_SERVICE = "zhipu"
 DEFAULT_CODING_PLAN_SERVICE = "openailiked"
 DEFAULT_ENDPOINT_MODE = "coding-plan"
 DEFAULT_MODEL = "GLM-4-Flash-250414"
+KNOWN_RENDER_SUFFIXES = ("-mono", "-dual")
 
 
 def build_parser(config: dict) -> argparse.ArgumentParser:
@@ -118,8 +119,12 @@ def build_pdf2zh_env(
     model: str,
     base_url: str | None,
     repo_root: Path,
+    env: dict[str, str] | None = None,
 ) -> dict[str, str]:
-    env = os.environ.copy()
+    if env is None:
+        env = os.environ.copy()
+    else:
+        env = env.copy()
     runtime_home_str = str(runtime_home)
     drive, tail = os.path.splitdrive(runtime_home_str)
 
@@ -181,6 +186,26 @@ def validate_input_pdf(pdf_path: Path) -> None:
         raise ValueError(f"Input file must be a PDF: {pdf_path}")
 
 
+def strip_render_suffix(name: str) -> str:
+    for suffix in KNOWN_RENDER_SUFFIXES:
+        if name.endswith(suffix):
+            return name[: -len(suffix)]
+    return name
+
+
+def resolve_output_dir(repo_root: Path, input_pdf: Path) -> tuple[Path, str]:
+    input_pdf = input_pdf.resolve()
+
+    if input_pdf.name.lower() == "original.pdf" and input_pdf.parent.parent.name == "papers":
+        return input_pdf.parent, input_pdf.parent.name
+
+    if input_pdf.parent.parent.name == "papers":
+        return input_pdf.parent, strip_render_suffix(input_pdf.stem)
+
+    paper_name = strip_render_suffix(input_pdf.stem)
+    return repo_root / "papers" / paper_name, paper_name
+
+
 def find_translated_dual_pdf(output_dir: Path, input_stem: str) -> Path | None:
     direct_candidate = output_dir / "bilingual.pdf"
     if direct_candidate.exists():
@@ -224,10 +249,14 @@ def main() -> int:
             if not selected_base_url:
                 selected_base_url = DEFAULT_CODING_PLAN_BASE_URL
 
-        paper_name = input_pdf.stem
-        output_dir = repo_root / "papers" / paper_name
+        output_dir, paper_name = resolve_output_dir(repo_root, input_pdf)
         output_dir.mkdir(parents=True, exist_ok=True)
         output_pdf = output_dir / "bilingual.pdf"
+
+        env = os.environ.copy()
+        api_key = config["api"].get("api_key", "").strip()
+        if api_key and "ZHIPU_API_KEY" not in env and "OPENAILIKED_API_KEY" not in env:
+            env["ZHIPU_API_KEY"] = api_key
 
         runtime_home = resolve_runtime_home(args, repo_root)
         ensure_runtime_dirs(runtime_home)
@@ -238,10 +267,8 @@ def main() -> int:
             args.model,
             selected_base_url,
             repo_root,
+            env,
         )
-        api_key = config["api"].get("api_key", "").strip()
-        if api_key and "ZHIPU_API_KEY" not in env and "OPENAILIKED_API_KEY" not in env:
-            env["ZHIPU_API_KEY"] = api_key
 
         cmd = [
             str(pdf2zh_exe),
