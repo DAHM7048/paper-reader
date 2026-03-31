@@ -39,7 +39,7 @@ opencode 自动调用这些命令：
 ```json
 {
   "api": {
-    "api_key": "XXXX"
+    "api_key": "user_api"
   }
 }
 ```
