@@ -1,0 +1,19 @@
+{
+  "api": {
+    "api_key": "",
+    "endpoint_mode": "coding-plan",
+    "base_url": "https://open.bigmodel.cn/api/coding/paas/v4"
+  },
+  "translate": {
+    "pdf2zh_exe": "D:/study/python3.12/Scripts/pdf2zh.exe",
+    "service": "zhipu",
+    "model": "GLM-4-Flash-250414",
+    "threads": 5,
+    "timeout": 3600
+  },
+  "index": {
+    "model": "GLM-4-Flash-250414",
+    "timeout": 900,
+    "max_chunk_pages": 5
+  }
+}

@@ -1,0 +1,11 @@
+# Runtime and cache
+.cache/
+.config/
+.runtime/
+**/__pycache__/
+*.pyc
+paper_reader_config.local.json
+
+# Generated paper artifacts
+papers/
+*.pdf
